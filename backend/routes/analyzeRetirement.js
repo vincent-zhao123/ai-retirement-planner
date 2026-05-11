@@ -258,7 +258,13 @@ function simulateRetirementPlan(inputs) {
     }
 
       totalTax = rrspTax + nonRegisteredTax;
-      effectiveTaxRate = totalTax / taxableIncomeForYear;
+      const taxableIncomeForYear =
+        rrspWithdrawal + nonRegisteredGain;
+
+      if (taxableIncomeForYear > 0) {
+        effectiveTaxRate =
+            totalTax / taxableIncomeForYear;
+      }
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
