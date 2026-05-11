@@ -163,11 +163,22 @@ function simulateRetirementPlan(inputs) {
         nonRegisteredBalance + nonRegisteredGain;
   
       if (!retired) {
+
+        const totalTaxableIncome =
+        income + nonRegisteredGain;
+  
+        if (totalTaxableIncome > 0) {
+            totalTax =
+            calculateTax(totalTaxableIncome);
+    
+            effectiveTaxRate =
+            totalTax / totalTaxableIncome;
+        }
+
         rrspContribution = Number(rrspContribute);
         tfsaContribution = Number(tfsaContribute);
   
-        const remainingIncome =
-          income - expenses - rrspContribution - tfsaContribution;
+        const remainingIncome = income - totalTax - expenses - rrspContribution - tfsaContribution;
   
         nonRegisteredContribution = Math.max(remainingIncome, 0);
   
@@ -187,10 +198,7 @@ function simulateRetirementPlan(inputs) {
 
         rrspBalance -= fromRrsp;
 
-        // RRSP withdrawal after tax is the cash available for expenses
-        const rrspNetCash = rrspWithdrawal - rrspTax;
-
-        amountNeeded -= rrspNetCash;
+        amountNeeded -= rrspWithdrawal;
 
         // If RRSP withdrawal is greater than expenses,
         // extra cash goes to non-registered
@@ -227,24 +235,19 @@ function simulateRetirementPlan(inputs) {
             nonRegisteredBalance = 0;
             tfsaBalance = 0;
         }
+
+        const totalTaxableIncome =
+        rrspWithdrawal + nonRegisteredGain;
+
+        if (totalTaxableIncome > 0) {
+        totalTax =
+            calculateTax(totalTaxableIncome);
+
+        effectiveTaxRate =
+            totalTax / totalTaxableIncome;
+        }
     }
 
-    const totalTaxableIncome =
-        income + rrspWithdrawal + nonRegisteredGain;
-    
-    let averageTaxRate = 0;
-    
-    if (totalTaxableIncome > 0) {
-        averageTaxRate =
-        calculateTax(totalTaxableIncome) / totalTaxableIncome;
-    }
-    
-    effectiveTaxRate = averageTaxRate;
-
-    totalTax =
-    totalTaxableIncome * effectiveTaxRate;
-    
-    // deduct non-registered tax from non-registered balance
     if (totalTax > 0) {
         let taxRemaining = totalTax;
       
@@ -275,34 +278,7 @@ function simulateRetirementPlan(inputs) {
           tfsaBalance = 0;
         }
     }
-    
-    // deduct RRSP tax from available RRSP cash effect
-    // Since RRSP tax should reduce usable cash, add it to amount needed earlier.
-    // Easier adjustment: after tax is calculated, reduce non-registered first, then TFSA if needed.
-    if (rrspTax > 0 && retired) {
-        let taxShortfall = rrspTax;
-    
-        const fromNonRegisteredForTax = Math.min(
-        nonRegisteredBalance,
-        taxShortfall
-        );
-    
-        nonRegisteredBalance -= fromNonRegisteredForTax;
-        taxShortfall -= fromNonRegisteredForTax;
-    
-        if (taxShortfall > 0) {
-        const fromTfsaForTax = Math.min(tfsaBalance, taxShortfall);
-        tfsaBalance -= fromTfsaForTax;
-        taxShortfall -= fromTfsaForTax;
-        }
-    
-        if (taxShortfall > 0) {
-        rrspBalance = 0;
-        nonRegisteredBalance = 0;
-        tfsaBalance = 0;
-        }
-    }
-  
+
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
   
