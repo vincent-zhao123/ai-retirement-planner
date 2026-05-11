@@ -248,7 +248,7 @@ function simulateRetirementPlan(inputs) {
         }
     }
 
-    if (totalTax > 0) {
+    if (retired && totalTax > 0) {
         let taxRemaining = totalTax;
       
         // First use non-registered
