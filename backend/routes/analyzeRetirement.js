@@ -164,12 +164,6 @@ function simulateRetirementPlan(inputs) {
       const nonRegisteredGain =
         nonRegisteredBalance * (Number(nonRegisteredRoi) / 100);
 
-      nonRegisteredTax = calculateTax(nonRegisteredGain);
-      if (nonRegisteredGain > 0) {
-        nonRegisteredTaxRate =
-          nonRegisteredTax / nonRegisteredGain;
-      }
-
       nonRegisteredBalance =
         nonRegisteredBalance + nonRegisteredGain - nonRegisteredTax;
   
@@ -195,11 +189,6 @@ function simulateRetirementPlan(inputs) {
         );
 
         rrspWithdrawal = fromRrsp;
-        rrspTax = calculateTax(rrspWithdrawal);
-        if (rrspWithdrawal > 0) {
-            rrspTaxRate =
-              rrspTax / rrspWithdrawal;
-          }
 
         rrspBalance -= fromRrsp;
 
@@ -245,9 +234,54 @@ function simulateRetirementPlan(inputs) {
         }
     }
 
-      totalTax = rrspTax + nonRegisteredTax;
-      const taxableIncomeForYear =
-        rrspWithdrawal + nonRegisteredGain;
+    const totalTaxableIncome =
+        income + rrspWithdrawal + nonRegisteredGain;
+    
+    let averageTaxRate = 0;
+    
+    if (totalTaxableIncome > 0) {
+        averageTaxRate =
+        calculateTax(totalTaxableIncome) / totalTaxableIncome;
+    }
+    
+    rrspTax = rrspWithdrawal * averageTaxRate;
+    nonRegisteredTax = nonRegisteredGain * averageTaxRate;
+    
+    rrspTaxRate = averageTaxRate;
+    nonRegisteredTaxRate = averageTaxRate;
+    effectiveTaxRate = averageTaxRate;
+    
+    totalTax = rrspTax + nonRegisteredTax;
+    
+    // deduct non-registered tax from non-registered balance
+    nonRegisteredBalance -= nonRegisteredTax;
+    
+    // deduct RRSP tax from available RRSP cash effect
+    // Since RRSP tax should reduce usable cash, add it to amount needed earlier.
+    // Easier adjustment: after tax is calculated, reduce non-registered first, then TFSA if needed.
+    if (rrspTax > 0 && retired) {
+        let taxShortfall = rrspTax;
+    
+        const fromNonRegisteredForTax = Math.min(
+        nonRegisteredBalance,
+        taxShortfall
+        );
+    
+        nonRegisteredBalance -= fromNonRegisteredForTax;
+        taxShortfall -= fromNonRegisteredForTax;
+    
+        if (taxShortfall > 0) {
+        const fromTfsaForTax = Math.min(tfsaBalance, taxShortfall);
+        tfsaBalance -= fromTfsaForTax;
+        taxShortfall -= fromTfsaForTax;
+        }
+    
+        if (taxShortfall > 0) {
+        rrspBalance = 0;
+        nonRegisteredBalance = 0;
+        tfsaBalance = 0;
+        }
+    }
 
       if (taxableIncomeForYear > 0) {
         effectiveTaxRate =
