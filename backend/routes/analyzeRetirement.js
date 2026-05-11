@@ -43,6 +43,27 @@ function calculateTax(income) {
     return tax;
 }
 
+function getAverageTaxRate(income) {
+    const taxableIncome = Math.max(Number(income), 0);
+  
+    if (taxableIncome <= 53891) return 0.1905;
+    if (taxableIncome <= 58523) return 0.2315;
+    if (taxableIncome <= 94907) return 0.2965;
+    if (taxableIncome <= 107785) return 0.3148;
+    if (taxableIncome <= 111814) return 0.3389;
+    if (taxableIncome <= 117045) return 0.3791;
+    if (taxableIncome <= 150000) return 0.4341;
+    if (taxableIncome <= 177882) return 0.4497;
+    if (taxableIncome <= 220000) return 0.4829;
+    if (taxableIncome <= 258482) return 0.4985;
+  
+    return 0.5353;
+  }
+  
+  function calculateTax(income) {
+    return Number(income) * getAverageTaxRate(income);
+}
+
 function calculateAnnualRrspWithdrawal(inputs) {
     const {
       yearsToRetire,
@@ -157,7 +178,7 @@ function simulateRetirementPlan(inputs) {
       const nonRegisteredGain =
         nonRegisteredBalance * (Number(nonRegisteredRoi) / 100);
 
-      nonRegisteredTax = calculateTax(nonRegisteredGain);
+      nonRegisteredTax = getAverageTaxRate(calculateTax(nonRegisteredGain));
 
       nonRegisteredBalance =
         nonRegisteredBalance + nonRegisteredGain - nonRegisteredTax;
@@ -184,7 +205,7 @@ function simulateRetirementPlan(inputs) {
         );
 
         rrspWithdrawal = fromRrsp;
-        rrspTax = calculateTax(rrspWithdrawal);
+        rrspTax = getAverageTaxRate(calculateTax(rrspWithdrawal));
 
         rrspBalance -= fromRrsp;
 
