@@ -17,32 +17,42 @@ function calculateAnnualRrspWithdrawal(inputs) {
       rrspRoi,
     } = inputs;
   
-    let rrspBalance = Number(rrspInitialBalance);
+    let rrspAtRetirement = Number(rrspInitialBalance);
   
-    // Work years: contribute to RRSP from year 0 until retirement
     for (let year = 0; year < Number(yearsToRetire); year++) {
-      rrspBalance =
-        rrspBalance * (1 + Number(rrspRoi) / 100) +
+      rrspAtRetirement =
+        rrspAtRetirement * (1 + Number(rrspRoi) / 100) +
         Number(rrspContribute);
     }
   
     const retirementYears =
       Number(yearsToPlan) - Number(yearsToRetire) + 1;
   
-    if (retirementYears <= 0) {
-      return 0;
+    if (retirementYears <= 0) return 0;
+  
+    let low = 0;
+    let high = rrspAtRetirement * 2;
+    let bestWithdrawal = 0;
+  
+    for (let i = 0; i < 50; i++) {
+      const mid = (low + high) / 2;
+  
+      let balance = rrspAtRetirement;
+  
+      for (let year = 0; year < retirementYears; year++) {
+        balance = balance * (1 + Number(rrspRoi) / 100);
+        balance -= mid;
+      }
+  
+      if (balance > 0) {
+        bestWithdrawal = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
     }
   
-    const r = Number(rrspRoi) / 100;
-  
-    if (r === 0) {
-      return rrspBalance / retirementYears;
-    }
-  
-    return (
-        (rrspBalance * r * Math.pow(1 + r, retirementYears)) /
-        (Math.pow(1 + r, retirementYears) - 1)
-    );
+    return bestWithdrawal;
   }
 
 function simulateRetirementPlan(inputs) {
