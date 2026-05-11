@@ -165,7 +165,7 @@ function simulateRetirementPlan(inputs) {
         nonRegisteredBalance * (Number(nonRegisteredRoi) / 100);
 
       nonRegisteredBalance =
-        nonRegisteredBalance + nonRegisteredGain - nonRegisteredTax;
+        nonRegisteredBalance + nonRegisteredGain;
   
       if (!retired) {
         rrspContribution = Number(rrspContribute);
@@ -282,11 +282,6 @@ function simulateRetirementPlan(inputs) {
         tfsaBalance = 0;
         }
     }
-
-      if (taxableIncomeForYear > 0) {
-        effectiveTaxRate =
-            totalTax / taxableIncomeForYear;
-      }
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
