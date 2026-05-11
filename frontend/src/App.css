@@ -135,5 +135,12 @@ body {
   padding: 28px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
   margin-bottom: 30px;
+  width: 100%;
+  box-sizing: border-box;
   height: 500px;
+  min-height: 500px;
+}
+
+.chart-card .recharts-responsive-container {
+  min-height: 400px;
 }
