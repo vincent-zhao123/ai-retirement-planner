@@ -19,6 +19,7 @@ function calculateAnnualRrspWithdrawal(inputs) {
   
     let rrspBalance = Number(rrspInitialBalance);
   
+    // Work years: contribute to RRSP from year 0 until retirement
     for (let year = 0; year < Number(yearsToRetire); year++) {
       rrspBalance =
         rrspBalance * (1 + Number(rrspRoi) / 100) +
@@ -32,8 +33,17 @@ function calculateAnnualRrspWithdrawal(inputs) {
       return 0;
     }
   
-    return rrspBalance / retirementYears;
-}
+    const r = Number(rrspRoi) / 100;
+  
+    if (r === 0) {
+      return rrspBalance / retirementYears;
+    }
+  
+    return (
+      (rrspBalance * r) /
+      (1 - Math.pow(1 + r, -retirementYears))
+    );
+  }
 
 function simulateRetirementPlan(inputs) {
     const annualRrspWithdrawal = calculateAnnualRrspWithdrawal(inputs);
