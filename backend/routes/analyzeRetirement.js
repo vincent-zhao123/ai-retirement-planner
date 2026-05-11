@@ -567,9 +567,9 @@ router.post("/excel", async (req, res) => {
             width: 28,
         },
 
-        { header: "RRSP Tax", key: "rrspTax", width: 15 },
-        { header: "Non-Registered Tax", key: "nonRegisteredTax", width: 22 },
-        { header: "Total Tax", key: "totalTax", width: 15 },
+        { header: "RRSP Tax Rate(%)", key: "rrspTax", width: 15 },
+        { header: "Non-Registered Tax Rate(%)", key: "nonRegisteredTax", width: 22 },
+        { header: "Total Tax Rate(%)", key: "totalTax", width: 15 },
         
         { header: "RRSP Balance", key: "rrspBalance", width: 18 },
         { header: "TFSA Balance", key: "tfsaBalance", width: 18 },
