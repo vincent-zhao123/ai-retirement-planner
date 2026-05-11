@@ -40,8 +40,8 @@ function calculateAnnualRrspWithdrawal(inputs) {
     }
   
     return (
-      (rrspBalance * r) /
-      (1 - Math.pow(1 + r, -retirementYears))
+        (rrspBalance * r * Math.pow(1 + r, retirementYears)) /
+        (Math.pow(1 + r, retirementYears) - 1)
     );
   }
 
@@ -164,7 +164,9 @@ function simulateRetirementPlan(inputs) {
 
         // 4. If still not enough, assets depleted
         if (amountNeeded > 0) {
-        tfsaBalance -= amountNeeded;
+            rrspBalance = 0;
+            nonRegisteredBalance = 0;
+            tfsaBalance = 0;
         }
     }
   
