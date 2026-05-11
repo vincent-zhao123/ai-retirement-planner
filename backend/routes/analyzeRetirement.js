@@ -78,33 +78,36 @@ function simulateRetirementPlan(inputs) {
       } else {
         let amountNeeded = expenses;
   
+        const fromRrsp = Math.min(rrspBalance, amountNeeded);
+
+        rrspWithdrawal = fromRrsp;
+        rrspBalance -= fromRrsp;
+        amountNeeded -= fromRrsp;
+
+        // 2. Then use Non-Registered
+        if (amountNeeded > 0) {
         const fromNonRegistered = Math.min(
-          nonRegisteredBalance,
-          amountNeeded
+            nonRegisteredBalance,
+            amountNeeded
         );
-  
+
         nonRegisteredWithdrawal = fromNonRegistered;
         nonRegisteredBalance -= fromNonRegistered;
         amountNeeded -= fromNonRegistered;
-  
-        if (amountNeeded > 0) {
-          const fromTfsa = Math.min(tfsaBalance, amountNeeded);
-  
-          tfsaWithdrawal = fromTfsa;
-          tfsaBalance -= fromTfsa;
-          amountNeeded -= fromTfsa;
         }
-  
+
+        // 3. Finally use TFSA
         if (amountNeeded > 0) {
-          const fromRrsp = Math.min(rrspBalance, amountNeeded);
-  
-          rrspWithdrawal = fromRrsp;
-          rrspBalance -= fromRrsp;
-          amountNeeded -= fromRrsp;
+        const fromTfsa = Math.min(tfsaBalance, amountNeeded);
+
+        tfsaWithdrawal = fromTfsa;
+        tfsaBalance -= fromTfsa;
+        amountNeeded -= fromTfsa;
         }
-  
+
+        // 4. If still not enough, assets are depleted
         if (amountNeeded > 0) {
-          rrspBalance -= amountNeeded;
+        tfsaBalance -= amountNeeded;
         }
       }
   
