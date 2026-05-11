@@ -150,12 +150,7 @@ function simulateRetirementPlan(inputs) {
       let tfsaWithdrawal = 0;
       let nonRegisteredWithdrawal = 0;
 
-      let rrspTax = 0;
-      let nonRegisteredTax = 0;
       let totalTax = 0;
-
-      let rrspTaxRate = 0;
-      let nonRegisteredTaxRate = 0;
       let effectiveTaxRate = 0;
   
       // growth first
@@ -244,17 +239,42 @@ function simulateRetirementPlan(inputs) {
         calculateTax(totalTaxableIncome) / totalTaxableIncome;
     }
     
-    rrspTax = rrspWithdrawal * averageTaxRate;
-    nonRegisteredTax = nonRegisteredGain * averageTaxRate;
-    
-    rrspTaxRate = averageTaxRate;
-    nonRegisteredTaxRate = averageTaxRate;
     effectiveTaxRate = averageTaxRate;
-    
-    totalTax = rrspTax + nonRegisteredTax;
+
+    totalTax =
+    totalTaxableIncome * effectiveTaxRate;
     
     // deduct non-registered tax from non-registered balance
-    nonRegisteredBalance -= nonRegisteredTax;
+    if (totalTax > 0) {
+        let taxRemaining = totalTax;
+      
+        // First use non-registered
+        const fromNonRegForTax = Math.min(
+          nonRegisteredBalance,
+          taxRemaining
+        );
+      
+        nonRegisteredBalance -= fromNonRegForTax;
+        taxRemaining -= fromNonRegForTax;
+      
+        // Then TFSA
+        if (taxRemaining > 0) {
+          const fromTfsaForTax = Math.min(
+            tfsaBalance,
+            taxRemaining
+          );
+      
+          tfsaBalance -= fromTfsaForTax;
+          taxRemaining -= fromTfsaForTax;
+        }
+      
+        // Assets depleted
+        if (taxRemaining > 0) {
+          rrspBalance = 0;
+          nonRegisteredBalance = 0;
+          tfsaBalance = 0;
+        }
+    }
     
     // deduct RRSP tax from available RRSP cash effect
     // Since RRSP tax should reduce usable cash, add it to amount needed earlier.
@@ -305,18 +325,7 @@ function simulateRetirementPlan(inputs) {
           nonRegisteredWithdrawal.toFixed(2)
         ),
 
-        rrspTax: Number(rrspTax.toFixed(2)),
-        nonRegisteredTax: Number(nonRegisteredTax.toFixed(2)),
         totalTax: Number(totalTax.toFixed(2)),
-
-        rrspTaxRate:
-        Number((rrspTaxRate * 100).toFixed(2)),
-
-        nonRegisteredTaxRate:
-        Number(
-            (nonRegisteredTaxRate * 100).toFixed(2)
-        ),
-
         effectiveTaxRate:
         Number(
             (effectiveTaxRate * 100).toFixed(2)
@@ -610,10 +619,6 @@ router.post("/excel", async (req, res) => {
             width: 28,
         },
 
-        { header: "RRSP Tax", key: "rrspTax", width: 15 },
-        { header: "RRSP Tax Rate(%)", key: "rrspTaxRate", width: 15 },
-        { header: "Non-Registered Tax", key: "nonRegisteredTax", width: 22 },
-        { header: "Non-Registered Tax Rate(%)", key: "nonRegisteredTaxRate", width: 22 },
         { header: "Total Tax", key: "totalTax", width: 15 },
         { header: "Total Tax Rate(%)", key: "effectiveTaxRate", width: 15 },
         
