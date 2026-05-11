@@ -46,7 +46,6 @@ function calculateAnnualRrspWithdrawal(inputs) {
   }
 
 function simulateRetirementPlan(inputs) {
-    const annualRrspWithdrawal = calculateAnnualRrspWithdrawal(inputs);
     const {
       currentAge,
       yearsToRetire,
@@ -76,6 +75,14 @@ function simulateRetirementPlan(inputs) {
     yearsToPlan === ""
         ? 120
         : Number(yearsToPlan);
+
+    const simulationInputs = {
+        ...inputs,
+        yearsToPlan: maxYears,
+    };
+        
+    const annualRrspWithdrawal =
+        calculateAnnualRrspWithdrawal(simulationInputs);
 
     for (let year = 0; year <= maxYears; year++) {
       const age = Number(currentAge) + year;
@@ -425,16 +432,34 @@ router.post("/excel", async (req, res) => {
       const worksheet = workbook.addWorksheet("Retirement Projection");
   
       worksheet.columns = [
+        { header: "Year", key: "year", width: 10 },
         { header: "Age", key: "age", width: 10 },
         { header: "Retired", key: "retired", width: 12 },
         { header: "Income", key: "income", width: 15 },
         { header: "Expenses", key: "expenses", width: 15 },
+        
+        { header: "RRSP Contribution", key: "rrspContribution", width: 20 },
+        { header: "TFSA Contribution", key: "tfsaContribution", width: 20 },
+        {
+            header: "Non-Registered Contribution",
+            key: "nonRegisteredContribution",
+            width: 28,
+        },
+        
+        { header: "RRSP Withdrawal", key: "rrspWithdrawal", width: 20 },
+        { header: "TFSA Withdrawal", key: "tfsaWithdrawal", width: 20 },
+        {
+            header: "Non-Registered Withdrawal",
+            key: "nonRegisteredWithdrawal",
+            width: 28,
+        },
+        
         { header: "RRSP Balance", key: "rrspBalance", width: 18 },
         { header: "TFSA Balance", key: "tfsaBalance", width: 18 },
         {
-          header: "Non-Registered Balance",
-          key: "nonRegisteredBalance",
-          width: 25,
+            header: "Non-Registered Balance",
+            key: "nonRegisteredBalance",
+            width: 25,
         },
         { header: "Total Assets", key: "totalAssets", width: 18 },
       ];
