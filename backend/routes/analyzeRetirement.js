@@ -8,7 +8,35 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function calculateAnnualRrspWithdrawal(inputs) {
+    const {
+      yearsToRetire,
+      yearsToPlan,
+      rrspInitialBalance,
+      rrspContribute,
+      rrspRoi,
+    } = inputs;
+  
+    let rrspBalance = Number(rrspInitialBalance);
+  
+    for (let year = 0; year < Number(yearsToRetire); year++) {
+      rrspBalance =
+        rrspBalance * (1 + Number(rrspRoi) / 100) +
+        Number(rrspContribute);
+    }
+  
+    const retirementYears =
+      Number(yearsToPlan) - Number(yearsToRetire) + 1;
+  
+    if (retirementYears <= 0) {
+      return 0;
+    }
+  
+    return rrspBalance / retirementYears;
+}
+
 function simulateRetirementPlan(inputs) {
+    const annualRrspWithdrawal = calculateAnnualRrspWithdrawal(inputs);
     const {
       currentAge,
       yearsToRetire,
@@ -77,14 +105,26 @@ function simulateRetirementPlan(inputs) {
         nonRegisteredBalance += nonRegisteredContribution;
       } else {
         let amountNeeded = expenses;
-  
-        const fromRrsp = Math.min(rrspBalance, amountNeeded);
+
+        // 1. Fixed RRSP withdrawal first
+        const fromRrsp = Math.min(
+        rrspBalance,
+        annualRrspWithdrawal
+        );
 
         rrspWithdrawal = fromRrsp;
         rrspBalance -= fromRrsp;
         amountNeeded -= fromRrsp;
 
-        // 2. Then use Non-Registered
+        // If RRSP withdrawal is greater than expenses,
+        // extra cash goes to non-registered
+        if (amountNeeded < 0) {
+        nonRegisteredContribution += Math.abs(amountNeeded);
+        nonRegisteredBalance += Math.abs(amountNeeded);
+        amountNeeded = 0;
+        }
+
+        // 2. Use Non-Registered to cover remaining expenses
         if (amountNeeded > 0) {
         const fromNonRegistered = Math.min(
             nonRegisteredBalance,
@@ -96,7 +136,7 @@ function simulateRetirementPlan(inputs) {
         amountNeeded -= fromNonRegistered;
         }
 
-        // 3. Finally use TFSA
+        // 3. Use TFSA last
         if (amountNeeded > 0) {
         const fromTfsa = Math.min(tfsaBalance, amountNeeded);
 
@@ -105,11 +145,11 @@ function simulateRetirementPlan(inputs) {
         amountNeeded -= fromTfsa;
         }
 
-        // 4. If still not enough, assets are depleted
+        // 4. If still not enough, assets depleted
         if (amountNeeded > 0) {
         tfsaBalance -= amountNeeded;
         }
-      }
+    }
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
@@ -215,36 +255,39 @@ router.post("/", async (req, res) => {
     } else if (req.body.mode === "solve_retirement") {
         let bestYearsToRetire = null;
         let bestResults = [];
-      
-        for (let testYearsToRetire = 0; testYearsToRetire <= 60; testYearsToRetire++) {
-          const testResults = simulateRetirementPlan({
+
+        for (
+            let testYearsToRetire = 0;
+            testYearsToRetire <= 60;
+            testYearsToRetire++
+        ) {
+            const testResults = simulateRetirementPlan({
             ...req.body,
             yearsToRetire: testYearsToRetire,
-          });
-      
-          const lastRow = testResults[testResults.length - 1];
-      
-          const survivesFullPlan =
+            });
+
+            const lastRow = testResults[testResults.length - 1];
+
+            const survivesFullPlan =
             testResults.length === Number(req.body.yearsToPlan) + 1 &&
             lastRow.totalAssets > 0;
-      
-          if (survivesFullPlan) {
+
+            if (survivesFullPlan) {
             bestYearsToRetire = testYearsToRetire;
             bestResults = testResults;
             break;
-          }
+            }
         }
-      
+
         if (bestYearsToRetire === null) {
-          bestYearsToRetire = "Not possible within 60 years";
-          bestResults = simulateRetirementPlan({
+            bestYearsToRetire = "Not possible within 60 years";
+            bestResults = simulateRetirementPlan({
             ...req.body,
             yearsToRetire: 60,
-          });
+            });
         }
-      
+
         results = bestResults;
-      
         req.body.calculatedYearsToRetire = bestYearsToRetire;
     } else {
         results = simulateRetirementPlan(req.body);
