@@ -8,6 +8,41 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function calculateTax(income) {
+    const taxableIncome = Math.max(Number(income), 0);
+  
+    const brackets = [
+      { limit: 53891, rate: 0.1905 },
+      { limit: 58523, rate: 0.2315 },
+      { limit: 94907, rate: 0.2965 },
+      { limit: 107785, rate: 0.3148 },
+      { limit: 111814, rate: 0.3389 },
+      { limit: 117045, rate: 0.3791 },
+      { limit: 150000, rate: 0.4341 },
+      { limit: 177882, rate: 0.4497 },
+      { limit: 220000, rate: 0.4829 },
+      { limit: 258482, rate: 0.4985 },
+      { limit: Infinity, rate: 0.5353 },
+    ];
+  
+    let tax = 0;
+    let previousLimit = 0;
+  
+    for (const bracket of brackets) {
+      if (taxableIncome > previousLimit) {
+        const taxableAmount =
+          Math.min(taxableIncome, bracket.limit) - previousLimit;
+  
+        tax += taxableAmount * bracket.rate;
+        previousLimit = bracket.limit;
+      } else {
+        break;
+      }
+    }
+  
+    return tax;
+}
+
 function calculateAnnualRrspWithdrawal(inputs) {
     const {
       yearsToRetire,
@@ -111,12 +146,21 @@ function simulateRetirementPlan(inputs) {
       let rrspWithdrawal = 0;
       let tfsaWithdrawal = 0;
       let nonRegisteredWithdrawal = 0;
+
+      let rrspTax = 0;
+      let nonRegisteredTax = 0;
+      let totalTax = 0;
   
       // growth first
       rrspBalance = rrspBalance * (1 + Number(rrspRoi) / 100);
       tfsaBalance = tfsaBalance * (1 + Number(tfsaRoi) / 100);
+      const nonRegisteredGain =
+        nonRegisteredBalance * (Number(nonRegisteredRoi) / 100);
+
+      nonRegisteredTax = calculateTax(nonRegisteredGain);
+
       nonRegisteredBalance =
-        nonRegisteredBalance * (1 + Number(nonRegisteredRoi) / 100);
+        nonRegisteredBalance + nonRegisteredGain - nonRegisteredTax;
   
       if (!retired) {
         rrspContribution = Number(rrspContribute);
@@ -140,8 +184,14 @@ function simulateRetirementPlan(inputs) {
         );
 
         rrspWithdrawal = fromRrsp;
+        rrspTax = calculateTax(rrspWithdrawal);
+
         rrspBalance -= fromRrsp;
-        amountNeeded -= fromRrsp;
+
+        // RRSP withdrawal after tax is the cash available for expenses
+        const rrspNetCash = rrspWithdrawal - rrspTax;
+
+        amountNeeded -= rrspNetCash;
 
         // If RRSP withdrawal is greater than expenses,
         // extra cash goes to non-registered
@@ -179,6 +229,8 @@ function simulateRetirementPlan(inputs) {
             tfsaBalance = 0;
         }
     }
+
+      totalTax = rrspTax + nonRegisteredTax;
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
@@ -201,6 +253,10 @@ function simulateRetirementPlan(inputs) {
         nonRegisteredWithdrawal: Number(
           nonRegisteredWithdrawal.toFixed(2)
         ),
+
+        rrspTax: Number(rrspTax.toFixed(2)),
+        nonRegisteredTax: Number(nonRegisteredTax.toFixed(2)),
+        totalTax: Number(totalTax.toFixed(2)),
   
         rrspBalance: Number(rrspBalance.toFixed(2)),
         tfsaBalance: Number(tfsaBalance.toFixed(2)),
@@ -489,6 +545,10 @@ router.post("/excel", async (req, res) => {
             key: "nonRegisteredWithdrawal",
             width: 28,
         },
+
+        { header: "RRSP Tax", key: "rrspTax", width: 15 },
+        { header: "Non-Registered Tax", key: "nonRegisteredTax", width: 22 },
+        { header: "Total Tax", key: "totalTax", width: 15 },
         
         { header: "RRSP Balance", key: "rrspBalance", width: 18 },
         { header: "TFSA Balance", key: "tfsaBalance", width: 18 },
