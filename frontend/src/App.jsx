@@ -59,7 +59,7 @@ function App() {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:5001/api/analyze-retirement",
+        `${import.meta.env.VITE_API_URL}/api/analyze-retirement`,
         {
           ...formData,
           mode,
@@ -77,7 +77,7 @@ function App() {
   const handleDownloadExcel = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/analyze-retirement/excel",
+        `${import.meta.env.VITE_API_URL}/api/analyze-retirement/excel`,
         { results: result.results },
         {
           responseType: "blob",
