@@ -243,10 +243,34 @@ router.post("/", async (req, res) => {
     let results;
 
     if (req.body.mode === "solve_years") {
-        results = simulateRetirementPlan({
+        let bestYearsToPlan = 0;
+        let bestResults = [];
+      
+        for (let testYearsToPlan = 1; testYearsToPlan <= 120; testYearsToPlan++) {
+          const testResults = simulateRetirementPlan({
             ...req.body,
-            yearsToPlan: "",
-        });
+            yearsToPlan: testYearsToPlan,
+          });
+      
+          const lastRow = testResults[testResults.length - 1];
+      
+          const completedFullPlan =
+            testResults.length === testYearsToPlan + 1;
+      
+          const survived =
+            completedFullPlan && lastRow.totalAssets > 0;
+      
+          if (survived) {
+            bestYearsToPlan = testYearsToPlan;
+            bestResults = testResults;
+          } else {
+            break;
+          }
+        }
+      
+        results = bestResults;
+      
+        req.body.calculatedYearsToPlan = bestYearsToPlan;
     } else if (req.body.mode === "solve_expenses") {
         let low = 0;
         let high = 300000;
