@@ -171,6 +171,10 @@ function simulateRetirementPlan(inputs) {
       let rrspTax = 0;
       let nonRegisteredTax = 0;
       let totalTax = 0;
+
+      let rrspTaxRate = 0;
+      let nonRegisteredTaxRate = 0;
+      let totalTaxRate = 0;
   
       // growth first
       rrspBalance = rrspBalance * (1 + Number(rrspRoi) / 100);
@@ -178,7 +182,8 @@ function simulateRetirementPlan(inputs) {
       const nonRegisteredGain =
         nonRegisteredBalance * (Number(nonRegisteredRoi) / 100);
 
-      nonRegisteredTax = getAverageTaxRate(calculateTax(nonRegisteredGain));
+      nonRegisteredTax = calculateTax(nonRegisteredGain);
+      nonRegisteredTaxRate = getAverageTaxRate(nonRegisteredTax);
 
       nonRegisteredBalance =
         nonRegisteredBalance + nonRegisteredGain - nonRegisteredTax;
@@ -205,7 +210,8 @@ function simulateRetirementPlan(inputs) {
         );
 
         rrspWithdrawal = fromRrsp;
-        rrspTax = getAverageTaxRate(calculateTax(rrspWithdrawal));
+        rrspTax = calculateTax(rrspWithdrawal);
+        rrspTaxRate = getAverageTaxRate(rrspTax);
 
         rrspBalance -= fromRrsp;
 
@@ -252,6 +258,7 @@ function simulateRetirementPlan(inputs) {
     }
 
       totalTax = rrspTax + nonRegisteredTax;
+      totalTaxRate = rrspTaxRate + nonRegisteredTaxRate;
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
@@ -278,6 +285,19 @@ function simulateRetirementPlan(inputs) {
         rrspTax: Number(rrspTax.toFixed(2)),
         nonRegisteredTax: Number(nonRegisteredTax.toFixed(2)),
         totalTax: Number(totalTax.toFixed(2)),
+
+        rrspTaxRate:
+        Number((rrspTaxRate * 100).toFixed(2)),
+
+        nonRegisteredTaxRate:
+        Number(
+            (nonRegisteredTaxRate * 100).toFixed(2)
+        ),
+
+        effectiveTaxRate:
+        Number(
+            (effectiveTaxRate * 100).toFixed(2)
+        ),
   
         rrspBalance: Number(rrspBalance.toFixed(2)),
         tfsaBalance: Number(tfsaBalance.toFixed(2)),
@@ -567,9 +587,12 @@ router.post("/excel", async (req, res) => {
             width: 28,
         },
 
-        { header: "RRSP Tax Rate(%)", key: "rrspTax", width: 15 },
-        { header: "Non-Registered Tax Rate(%)", key: "nonRegisteredTax", width: 22 },
-        { header: "Total Tax Rate(%)", key: "totalTax", width: 15 },
+        { header: "RRSP Tax", key: "rrspTax", width: 15 },
+        { header: "RRSP Tax Rate(%)", key: "rrspTaxRate", width: 15 },
+        { header: "Non-Registered Tax", key: "nonRegisteredTax", width: 22 },
+        { header: "Non-Registered Tax Rate(%)", key: "nonRegisteredTaxRate", width: 22 },
+        { header: "Total Tax", key: "totalTax", width: 15 },
+        { header: "Total Tax Rate(%)", key: "totalTaxRate", width: 15 },
         
         { header: "RRSP Balance", key: "rrspBalance", width: 18 },
         { header: "TFSA Balance", key: "tfsaBalance", width: 18 },
