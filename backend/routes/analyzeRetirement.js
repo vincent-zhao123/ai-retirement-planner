@@ -118,8 +118,8 @@ function simulateRetirementPlan(inputs) {
 
         // 1. Fixed RRSP withdrawal first
         const fromRrsp = Math.min(
-        rrspBalance,
-        annualRrspWithdrawal
+            rrspBalance,
+            annualRrspWithdrawal
         );
 
         rrspWithdrawal = fromRrsp;
@@ -130,20 +130,20 @@ function simulateRetirementPlan(inputs) {
         // extra cash goes to non-registered
         if (amountNeeded < 0) {
         nonRegisteredContribution += Math.abs(amountNeeded);
-        nonRegisteredBalance += Math.abs(amountNeeded);
+        nonRegisteredBalance += nonRegisteredContribution;
         amountNeeded = 0;
         }
 
         // 2. Use Non-Registered to cover remaining expenses
         if (amountNeeded > 0) {
-        const fromNonRegistered = Math.min(
-            nonRegisteredBalance,
-            amountNeeded
-        );
+            const fromNonRegistered = Math.min(
+                nonRegisteredBalance,
+                amountNeeded
+            );
 
-        nonRegisteredWithdrawal = fromNonRegistered;
-        nonRegisteredBalance -= fromNonRegistered;
-        amountNeeded -= fromNonRegistered;
+            nonRegisteredWithdrawal = fromNonRegistered;
+            nonRegisteredBalance -= fromNonRegistered;
+            amountNeeded -= fromNonRegistered;
         }
 
         // 3. Use TFSA last
