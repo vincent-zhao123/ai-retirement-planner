@@ -174,7 +174,7 @@ function simulateRetirementPlan(inputs) {
 
       let rrspTaxRate = 0;
       let nonRegisteredTaxRate = 0;
-      let totalTaxRate = 0;
+      let effectiveTaxRate = 0;
   
       // growth first
       rrspBalance = rrspBalance * (1 + Number(rrspRoi) / 100);
@@ -258,7 +258,7 @@ function simulateRetirementPlan(inputs) {
     }
 
       totalTax = rrspTax + nonRegisteredTax;
-      totalTaxRate = rrspTaxRate + nonRegisteredTaxRate;
+      effectiveTaxRate = rrspTaxRate + nonRegisteredTaxRate;
   
       const totalAssets =
         rrspBalance + tfsaBalance + nonRegisteredBalance;
@@ -592,7 +592,7 @@ router.post("/excel", async (req, res) => {
         { header: "Non-Registered Tax", key: "nonRegisteredTax", width: 22 },
         { header: "Non-Registered Tax Rate(%)", key: "nonRegisteredTaxRate", width: 22 },
         { header: "Total Tax", key: "totalTax", width: 15 },
-        { header: "Total Tax Rate(%)", key: "totalTaxRate", width: 15 },
+        { header: "Total Tax Rate(%)", key: "effectiveTaxRate", width: 15 },
         
         { header: "RRSP Balance", key: "rrspBalance", width: 18 },
         { header: "TFSA Balance", key: "tfsaBalance", width: 18 },
